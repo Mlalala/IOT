@@ -1,51 +1,45 @@
-from knxnet import *
-import socket, sys
-
-gateway_ip = "127.1.0.0"
-gateway_port = 3671
-
-def command(ip_source, ip_dest, port_cli, port_gate) :
-  data_endpoint = (ip_dest, port_cli) #"Connection_Request","Connection_State_Request","Disconnect_Request","Connection_Response","Connection_State_Response","Disconnect_Response"
-  control_endpoint = (ip_dest, port_cli) #"TunnelingRequest" and "Tunneling Ack"
-
-  sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-  sock.bind((ip_dest, port_cli)) #port ?
-
-  # -> Connection Resquest
-  conn_req_object = knxnet.create_frame(knxnet.ServiceTypeDescriptor.CONNECTION_REQUEST,control_endpoint,data_endpoint)
-  conn_req_dtgrm = conn_req_object.frame
-  sock.sendto (conn_req_dtgrm, (ip_source, port_gate))
-
-  # <- Receiving Connection Response
-  data_recv, addr = sock.recvfrom(1024)
-  conn_resp_object = knxnet.decode_frame(data_recv)
-  
-  conn_channel_id = conn_resp_object.channel_id
-
-  # -> Connection State Request
-  conn_req_stat_object = knxnet.create_frame(knxnet.ServiceTypeDescriptor.CONNECTION_STATE_REQUEST,conn_channel_id,control_endpoint)
-  conn_req_stat_dtgrm = conn_req_stat_object.frame
-  sock.sendto (conn_req_stat_dtgrm, (ip_source, port_gate))
-
-  # <- Connection State Response
-  data_recv, addr = sock.recvfrom(1024)
-  conn_resp_stat_object = knxnet.decode_frame(data_recv)
-
-  # -> Tunnelling Request
-  dest_addr_group = knxnet.GroupAddress.from_str("1/4/1")
-  data = 0
-  data_size = 1#sys.getsizeof(data)
-  tunn_req_object = knxnet.create_frame(knxnet.ServiceTypeDescriptor.TUNNELLING_REQUEST,dest_addr_group,conn_channel_id,data,data_size)
-  tunn_req_dtgrm = tunn_req_object.frame
-  sock.sendto (tunn_req_dtgrm, (ip_source, port_gate))
-  
-
-  print(conn_req_object)
-  print(conn_resp_object)
-  print(conn_req_stat_object)
-  print(conn_resp_stat_object)
-  print(tunn_req_object)
+from knxnet import knxnet
+import sys, argparse
+import utils_knx
 
 
+#exemple : python3 main.py -ip "127.1.0.0" -pcli 3672 -pgate 3671 -floor 4 -bloc 1 -a blind_open
+#exemple : python3 main.py -ip "127.1.0.0" -pcli 3672 -pgate 3671 -floor 4 -bloc 1 -a blind_close
 
-command(gateway_ip,"127.0.0.1",3672,gateway_port)
+
+# parser for command line exec
+parser = argparse.ArgumentParser(description='KNX Commands')
+parser.add_argument('-ip', type=str, nargs='+', required=True,help='ip')
+parser.add_argument('-pcli', type=int, nargs='+', required=True,help='port client')
+parser.add_argument('-pgate', type=int, nargs='+', required=True,help='port destination')
+parser.add_argument('-floor', type=int, nargs='+', required=True,help='floor')
+parser.add_argument('-bloc', type=int,nargs='+', required=True,help='bloc')
+parser.add_argument('-a', type=str, nargs='+', required=True, choices=("blind_open","blind_close","blind_control","valve_control"),help='action')
+parser.add_argument('-data', type=int, nargs='+', required=False,default=0,choices=range(0, 256),help='optional data')
+
+args = vars(parser.parse_args())
+
+gateway_ip = args['ip'][0]#"127.1.0.0"
+gateway_port = args['pgate'][0]#3671
+client_port = args['pcli'][0]#3672
+floor = args['floor'][0]
+bloc = args['bloc'][0]
+action = args['a'][0]
+data = args['data'][0]
+
+# command_name : (x,data,data_size)
+dict_commands = {
+"blind_open":(1,0,1),
+"blind_close":(1,1,1),
+"blind_control":(3,data,2),
+"valve_control":(0,data,2)
+}
+
+com = dict_commands[action]
+
+data = com[1]
+data_size = com[2]
+
+dest_addr_group = knxnet.GroupAddress.from_str(str(com[0])+"/"+str(floor)+"/"+str(bloc))
+
+utils_knx.command("127.0.0.1",gateway_ip,client_port,gateway_port,dest_addr_group,data,data_size)
