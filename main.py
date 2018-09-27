@@ -1,7 +1,7 @@
 from knxnet import *
 import socket, sys
 
-gateway_ip = "127.0.0.1"
+gateway_ip = "127.1.0.0"
 gateway_port = 3671
 
 def command(ip_source, ip_dest, port_cli, port_gate) :
@@ -30,12 +30,21 @@ def command(ip_source, ip_dest, port_cli, port_gate) :
   # <- Connection State Response
   data_recv, addr = sock.recvfrom(1024)
   conn_resp_stat_object = knxnet.decode_frame(data_recv)
+
+  # -> Tunnelling Request
+  dest_addr_group = knxnet.GroupAddress.from_str("1/4/1")
+  data = 0
+  data_size = 1#sys.getsizeof(data)
+  tunn_req_object = knxnet.create_frame(knxnet.ServiceTypeDescriptor.TUNNELLING_REQUEST,dest_addr_group,conn_channel_id,data,data_size)
+  tunn_req_dtgrm = tunn_req_object.frame
+  sock.sendto (tunn_req_dtgrm, (ip_source, port_gate))
   
 
   print(conn_req_object)
   print(conn_resp_object)
   print(conn_req_stat_object)
   print(conn_resp_stat_object)
+  print(tunn_req_object)
 
 
 
