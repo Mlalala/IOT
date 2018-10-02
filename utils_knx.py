@@ -1,7 +1,7 @@
 from knxnet import *
 import socket, sys
 
-def command(ip_source, ip_dest, port_cli, port_gate, dest_addr_group,data, data_size) :
+def write(ip_source, ip_dest, port_cli, port_gate, dest_addr_group,data, data_size) :
   # /!\ ports can be different
   data_endpoint = (ip_source, port_cli) #"Connection_Request","Connection_State_Request","Disconnect_Request","Connection_Response","Connection_State_Response","Disconnect_Response"
   control_endpoint = (ip_source, port_cli) #"TunnelingRequest" and "Tunneling Ack"
@@ -59,3 +59,6 @@ def command(ip_source, ip_dest, port_cli, port_gate, dest_addr_group,data, data_
   print("###tunn_resp_object\n",tunn_resp_object)
   print("###dis_req_object\n",dis_req_object)
   print("###dis_resp_object\n",dis_resp_object)
+
+def read():
+  #read func

@@ -42,4 +42,4 @@ data_size = com[2]
 
 dest_addr_group = knxnet.GroupAddress.from_str(str(com[0])+"/"+str(floor)+"/"+str(bloc))
 
-utils_knx.command("127.0.0.1",gateway_ip,client_port,gateway_port,dest_addr_group,data,data_size)
+utils_knx.write("127.0.0.1",gateway_ip,client_port,gateway_port,dest_addr_group,data,data_size)
