@@ -59,6 +59,7 @@ def write(ip_source, ip_dest, port_cli, port_gate, dest_addr_group,data, data_si
   #dis_status = conn_resp_stat_object.status
 
   #debug
+  print("WRITE")
   print("###conn_req_object\n",conn_req_object)
   print("###conn_resp_object\n",conn_resp_object)
   print("###conn_req_stat_object\n",conn_req_stat_object)
@@ -70,7 +71,7 @@ def write(ip_source, ip_dest, port_cli, port_gate, dest_addr_group,data, data_si
   print("###dis_req_object\n",dis_req_object)
   print("###dis_resp_object\n",dis_resp_object)
 
-def read(ip_source, ip_dest, port_cli, port_gate):
+def read(ip_source, ip_dest, port_cli, port_gate, dest_addr_group,data, data_size):
     # /!\ ports can be different
   data_endpoint = (ip_source, port_cli) #"Connection_Request","Connection_State_Request","Disconnect_Request","Connection_Response","Connection_State_Response","Disconnect_Response"
   control_endpoint = (ip_source, port_cli) #"TunnelingRequest" and "Tunneling Ack"
@@ -98,3 +99,54 @@ def read(ip_source, ip_dest, port_cli, port_gate):
   data_recv, addr = sock.recvfrom(1024)
   conn_resp_stat_object = knxnet.decode_frame(data_recv)
   conn_status = conn_resp_stat_object.status
+
+  # -> Tunnelling Request
+  tunn_req_object = knxnet.create_frame(knxnet.ServiceTypeDescriptor.TUNNELLING_REQUEST,dest_addr_group,conn_channel_id,data,data_size,0)
+  tunn_req_dtgrm = tunn_req_object.frame
+  sock.sendto (tunn_req_dtgrm, (ip_dest, port_gate))
+
+  # <- Tunnelling Ack
+  data_recv, addr = sock.recvfrom(1024)
+  tunn_resp_object = knxnet.decode_frame(data_recv)
+
+  # <- Tunnelling Request
+  data_recv, addr = sock.recvfrom(1024)
+  tunn_req_object_res = knxnet.decode_frame(data_recv)
+
+  # -> Tunnelling Ack
+  tunn_ack_object = knxnet.create_frame(knxnet.ServiceTypeDescriptor.TUNNELLING_ACK,conn_channel_id,conn_status)
+  tunn_ack_dtgrm = tunn_req_object.frame
+  sock.sendto (tunn_ack_dtgrm, (ip_dest, port_gate))
+
+  # <- Tunnelling Request
+  data_recv, addr = sock.recvfrom(1024)
+  tunn_req_object_res2 = knxnet.decode_frame(data_recv)
+
+
+  """
+  # -> Disconnect Request
+  dis_req_object = knxnet.create_frame(knxnet.ServiceTypeDescriptor.DISCONNECT_REQUEST,conn_channel_id,control_endpoint)
+  dis_req_dtgrm = tunn_req_object.frame
+  sock.sendto (dis_req_dtgrm, (ip_dest, port_gate))
+
+  # <- Disconnect Response
+  data_recv, addr = sock.recvfrom(1024)
+  dis_resp_object = knxnet.decode_frame(data_recv)
+  #dis_status = conn_resp_stat_object.status
+  """
+
+  #debug
+  print("READ")
+  print("###conn_req_object\n",conn_req_object)
+  print("###conn_resp_object\n",conn_resp_object)
+  print("###conn_req_stat_object\n",conn_req_stat_object)
+  print("###conn_resp_stat_object\n",conn_resp_stat_object)
+  print("###tunn_req_object\n",tunn_req_object)
+  print("###tunn_resp_object\n",tunn_resp_object)
+  print("###tunn_res_object_res\n",tunn_req_object_res)
+  print("###tunn_ack_object\n",tunn_ack_object) 
+  print("###tunn_req_object_res2\n",tunn_req_object_res2)
+  
+
+  #print("###dis_req_object\n",dis_req_object)
+  #print("###dis_resp_object\n",dis_resp_object)
