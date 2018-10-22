@@ -5,7 +5,7 @@ import sys
 
 app = Flask(__name__)
 
-#gateway_ip = "127.1.0.1"
+client_ip = "0.0.0.0"
 gateway_port = 3671
 client_port = 3672
 
@@ -40,14 +40,14 @@ def req(gateway_ip,floor,bloc,action):
         data_size = com[2]
 
         dest_addr_group = knxnet.GroupAddress.from_str(str(com[0])+"/"+str(floor)+"/"+str(bloc))
-        return utils_knx.write("127.0.0.1",gateway_ip,client_port,gateway_port,dest_addr_group,data,data_size)
+        return utils_knx.write(client_ip,gateway_ip,client_port,gateway_port,dest_addr_group,data,data_size)
     elif action in dict_read.keys() :
         com = dict_read[action]
         data = com[1]
         data_size = com[2]
 
         dest_addr_group = knxnet.GroupAddress.from_str(str(com[0])+"/"+str(floor)+"/"+str(bloc))
-        return utils_knx.read("127.0.0.1",gateway_ip,client_port,gateway_port,dest_addr_group,data,data_size)
+        return utils_knx.read(client_ip,gateway_ip,client_port,gateway_port,dest_addr_group,data,data_size)
     else : 
         return "unknown command"
 
@@ -61,10 +61,10 @@ def req_command(gateway_ip,floor,bloc,action,data):
         data_size = com[2]
 
         dest_addr_group = knxnet.GroupAddress.from_str(str(com[0])+"/"+str(floor)+"/"+str(bloc))
-        return utils_knx.write("127.0.0.1",gateway_ip,client_port,gateway_port,dest_addr_group,data,data_size)
+        return utils_knx.write(client_ip,gateway_ip,client_port,gateway_port,dest_addr_group,data,data_size)
     else : 
         return "unknown command"
 
 
 if __name__ == "__main__":
-    app.run()
+    app.run(host='0.0.0.0')
