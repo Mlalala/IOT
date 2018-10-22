@@ -1,4 +1,4 @@
 #!/bin/sh
 
-python3 IOT/actuasim/actuasim.py &
-sudo python3 IOT/IOT/beacons/KNX_rest/server.py 
+python3 actuasim/actuasim.py &
+sudo python3 beacons/KNX_rest/server.py 
